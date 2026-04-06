@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HopeLab — Rastreamento de Amostras</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#F3F4F6;min-height:100vh}
+
+/* LOGIN */
+#tela-login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:40px 32px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,0.10)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo h1{font-size:26px;color:#1E3A5F;font-weight:700}
+.login-logo p{font-size:12px;color:#6B7280;margin-top:4px}
+.btn-entrar{width:100%;padding:13px;background:#2563EB;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px}
+.btn-entrar:hover{background:#1D4ED8}
+
+/* APP */
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:#1E3A5F;color:#fff;padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:17px;font-weight:700}
+.topbar-info{display:flex;align-items:center;gap:8px}
+.topbar-perfil{font-size:11px;background:rgba(255,255,255,0.15);padding:3px 9px;border-radius:20px}
+.topbar-user{font-size:12px;opacity:.8}
+.btn-sair{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:5px 12px;border-radius:7px;font-size:12px;cursor:pointer}
+
+/* CONTEÚDO */
+.conteudo{flex:1;padding:16px;max-width:820px;margin:0 auto;width:100%}
+.secao-titulo{font-size:18px;font-weight:700;color:#1E3A5F;margin-bottom:14px}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid #E5E7EB}
+.card-titulo{font-size:14px;font-weight:600;color:#374151;margin-bottom:12px}
+
+/* FORM */
+.form-grupo{margin-bottom:13px}
+.form-grupo label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px}
+.form-grupo input,.form-grupo select,.form-grupo textarea{width:100%;padding:9px 11px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px;font-family:Arial;outline:none;background:#fff}
+.form-grupo input:focus,.form-grupo select:focus,.form-grupo textarea:focus{border-color:#2563EB}
+.form-grupo input[readonly]{background:#F9FAFB;color:#6B7280}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+
+/* BOTÕES */
+.btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:#2563EB;color:#fff}.btn-primary:hover{background:#1D4ED8}
+.btn-success{background:#059669;color:#fff}.btn-success:hover{background:#047857}
+.btn-danger{background:#DC2626;color:#fff}.btn-danger:hover{background:#B91C1C}
+.btn-secondary{background:#F3F4F6;color:#374151;border:1px solid #D1D5DB}.btn-secondary:hover{background:#E5E7EB}
+.btn-warning{background:#D97706;color:#fff}.btn-warning:hover{background:#B45309}
+.btn-full{width:100%}
+.btn-lg{padding:13px 18px;font-size:15px}
+.btn-sm{padding:5px 11px;font-size:12px}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-pendente{background:#FEF3C7;color:#92400E}
+.badge-aceita{background:#DBEAFE;color:#1E40AF}
+.badge-coletada{background:#D1FAE5;color:#065F46}
+.badge-recebida{background:#EDE9FE;color:#5B21B6}
+
+/* LISTAS */
+.req-item{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:9px;background:#fff;cursor:pointer;transition:border-color .15s}
+.req-item:hover{border-color:#2563EB}
+.req-info h3{font-size:13px;font-weight:600;color:#1E3A5F}
+.req-info p{font-size:11px;color:#6B7280;margin-top:2px}
+.req-right{text-align:right;flex-shrink:0;margin-left:10px}
+.req-right .horario{font-size:11px;color:#9CA3AF;margin-top:3px}
+
+/* MAPA */
+.mapa-placeholder{background:#EFF6FF;border-radius:10px;height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #BFDBFE;margin-bottom:14px}
+.mapa-placeholder .mapa-icon{font-size:36px}
+.mapa-placeholder p{font-size:13px;color:#1E40AF;margin-top:6px;font-weight:600}
+.mapa-placeholder small{font-size:11px;color:#6B7280}
+
+/* PARADAS */
+.parada-item{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:9px;background:#fff}
+.parada-num{width:30px;height:30px;border-radius:50%;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.parada-num.coletada{background:#059669}
+.parada-info{flex:1}
+.parada-info h3{font-size:13px;font-weight:600;color:#1E3A5F}
+.parada-info p{font-size:11px;color:#6B7280}
+
+/* SCANNER */
+.scanner-area{background:#1E3A5F;border-radius:12px;padding:24px 18px;text-align:center;color:#fff;margin-bottom:14px}
+.scanner-icon{font-size:42px;margin-bottom:10px}
+.scanner-area p{font-size:13px;opacity:.8;margin-bottom:14px}
+.scanner-input{background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:11px;font-size:16px;width:100%;text-align:center;font-family:monospace}
+.scanner-input::placeholder{color:rgba(255,255,255,0.45)}
+
+/* FOTO */
+.foto-area{border:2px dashed #D1D5DB;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#F9FAFB;transition:all .15s}
+.foto-area:hover{border-color:#2563EB;background:#EFF6FF}
+.foto-area .foto-icon{font-size:26px;margin-bottom:5px}
+.foto-area p{font-size:12px;color:#6B7280}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:14px}
+.kpi-card{background:#fff;border-radius:12px;padding:15px;border:1px solid #E5E7EB;text-align:center}
+.kpi-valor{font-size:30px;font-weight:700}
+.kpi-label{font-size:11px;color:#6B7280;margin-top:3px}
+.kpi-azul .kpi-valor{color:#2563EB}
+.kpi-verde .kpi-valor{color:#059669}
+.kpi-laranja .kpi-valor{color:#D97706}
+.kpi-roxo .kpi-valor{color:#7C3AED}
+
+/* TIMELINE */
+.tl-item{display:flex;gap:11px;margin-bottom:13px}
+.tl-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tl-azul{background:#2563EB}.tl-verde{background:#059669}.tl-roxo{background:#7C3AED}
+.tl-content h4{font-size:12px;font-weight:600;color:#374151}
+.tl-content p{font-size:11px;color:#6B7280}
+
+/* ALERTAS */
+.alerta{padding:11px 14px;border-radius:8px;margin-bottom:11px;font-size:12px}
+.alerta-sucesso{background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7}
+.alerta-erro{background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5}
+.alerta-info{background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE}
+.alerta-aviso{background:#FEF3C7;color:#92400E;border:1px solid #FCD34D}
+
+/* MENSAGEM BROADCAST */
+.msg-broadcast{background:linear-gradient(135deg,#1E3A5F,#2563EB);color:#fff;border-radius:12px;padding:16px;margin-bottom:14px}
+.msg-broadcast .msg-titulo{font-size:13px;font-weight:700;margin-bottom:4px;opacity:.8}
+.msg-broadcast .msg-texto{font-size:15px;font-weight:600}
+.msg-broadcast .msg-hora{font-size:11px;opacity:.6;margin-top:4px}
+
+/* TABS */
+.tabs{display:flex;gap:3px;background:#F3F4F6;padding:3px;border-radius:10px;margin-bottom:14px}
+.tab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;border-radius:8px;cursor:pointer;border:none;background:transparent}
+.tab.ativo{background:#fff;color:#2563EB;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.aberto{display:flex}
+.modal{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto}
+.modal-titulo{font-size:17px;font-weight:700;color:#1E3A5F;margin-bottom:14px}
+.modal-btns{display:flex;gap:9px;margin-top:14px}
+
+/* TABELA ADMIN */
+.tabela{width:100%;border-collapse:collapse;font-size:12px}
+.tabela th{background:#F3F4F6;padding:9px 11px;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #E5E7EB}
+.tabela td{padding:9px 11px;border-bottom:1px solid #F3F4F6;color:#374151}
+.tabela tr:hover td{background:#F9FAFB}
+
+/* HORÁRIO CHIP */
+.hora-chip{display:inline-flex;align-items:center;gap:5px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:#1E40AF;margin:3px}
+.hora-chip .del{cursor:pointer;color:#DC2626;font-size:14px;line-height:1}
+.hora-sel{display:inline-block;background:#F3F4F6;border:1px solid #D1D5DB;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;color:#374151;margin:3px;cursor:pointer;transition:all .15s}
+.hora-sel:hover,.hora-sel.ativo{background:#2563EB;color:#fff;border-color:#2563EB}
+
+.sep{height:1px;background:#E5E7EB;margin:14px 0}
+.info-clinica{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:11px;margin-bottom:13px;font-size:12px;color:#065F46}
+.info-clinica strong{display:block;margin-bottom:3px;font-size:13px}
+
+@media(max-width:480px){.form-row,.form-row-3{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="tela-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>🧪 HopeLab</h1>
+      <p>Sistema de Rastreamento de Amostras Médicas</p>
+    </div>
+    <div class="form-grupo">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="Digite seu usuário">
+    </div>
+    <div class="form-grupo">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="Digite sua senha">
+    </div>
+    <div id="login-erro" style="display:none" class="alerta alerta-erro">Usuário ou senha incorretos.</div>
+    <button class="btn-entrar" onclick="fazerLogin()">Entrar</button>
+    <p style="font-size:11px;color:#9CA3AF;text-align:center;margin-top:14px">
+      Acesso liberado pelo Administrativo · HopeLab v2.0
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app">
+  <div class="topbar">
+    <span class="topbar-logo">🧪 HopeLab</span>
+    <div class="topbar-info">
+      <span class="topbar-user" id="topbar-user"></span>
+      <span class="topbar-perfil" id="topbar-perfil"></span>
+      <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
+  </div>
+  <div class="conteudo" id="conteudo"></div>
+</div>
+
+<!-- ═══════════ MODAL ═══════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)fecharModal()">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// BANCO DE DADOS LOCAL
+// ══════════════════════════════════════════════════════════════
+const usuarios = [
+  {id:'u1', user:'admin', senha:'admin123', perfil:'admin', nome:'Dr. Roberto (Admin)'},
+  {id:'u2', user:'clinica1', senha:'clinic123', perfil:'clinica', nome:'Clínica São Paulo',
+    endereco:'Rua das Flores, 123 — Jardim Paulista', bairro:'Jardim Paulista', cidade:'São Paulo', telefone:'(11) 3456-7890'},
+  {id:'u3', user:'clinica2', senha:'norte123', perfil:'clinica', nome:'Clínica Norte',
+    endereco:'Av. Brasil, 321 — Vila Norte', bairro:'Vila Norte', cidade:'São Paulo', telefone:'(11) 2345-6789'},
+  {id:'u4', user:'motoboy1', senha:'moto123', perfil:'motoboy', nome:'Carlos Motoboy'},
+  {id:'u5', user:'recepcao', senha:'rec123', perfil:'recepcao', nome:'Recepção HopeLab'},
+];
+
+let usuarioAtual = null;
+
+const estado = {
+  reqs: [
+    {id:'REQ001',clinicaId:'u2',clinica:'Clínica São Paulo',endereco:'Rua das Flores, 123',paciente:'Maria Silva Santos',tutor:'Dra. Ana Lima',qtd:3,horario:'08:30',status:'coletada',barcode:'HL2024001'},
+    {id:'REQ002',clinicaId:'u2',clinica:'Clínica São Paulo',endereco:'Rua das Flores, 123',paciente:'João Carlos Oliveira',tutor:'Dr. Pedro Ramos',qtd:2,horario:'09:00',status:'aceita',barcode:'HL2024002'},
+    {id:'REQ003',clinicaId:'u2',clinica:'Clínica São Paulo',endereco:'Rua das Flores, 123',paciente:'Ana Beatriz Souza',tutor:'Dra. Ana Lima',qtd:1,horario:'09:30',status:'pendente',barcode:'HL2024003'},
+    {id:'REQ004',clinicaId:'u3',clinica:'Clínica Norte',endereco:'Av. Brasil, 321',paciente:'Pedro Henrique Lima',tutor:'Dr. Carlos Souza',qtd:1,horario:'10:00',status:'recebida',barcode:'HL2024004'},
+  ],
+  horariosDisponiveis: ['08:00','08:30','09:00','09:30','10:00','10:30','11:00'],
+  mensagemBroadcast: {texto:'Lembrem-se: todas as amostras devem estar identificadas antes da coleta. Obrigado!', hora:'08:15', autor:'Administrativo'},
+};
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+const ls = s=>({pendente:'Pendente',aceita:'Aceita',coletada:'Coletada',recebida:'Recebida'}[s]||s);
+const getReq = id=>estado.reqs.find(r=>r.id===id);
+const abrirModal = html=>{document.getElementById('modal-body').innerHTML=html;document.getElementById('modal-overlay').classList.add('aberto')};
+const fecharModal = ()=>document.getElementById('modal-overlay').classList.remove('aberto');
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharModal()});
+function switchTab(el,id){
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('ativo'));
+  el.classList.add('ativo');
+  document.querySelectorAll('.tabcontent').forEach(t=>t.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+function agora(){
+  return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════════════
+function fazerLogin(){
+  const user=document.getElementById('login-user').value.trim();
+  const pass=document.getElementById('login-pass').value.trim();
+  const found=usuarios.find(u=>u.user===user&&u.senha===pass);
+  if(!found){
+    document.getElementById('login-erro').style.display='block';return;
+  }
+  document.getElementById('login-erro').style.display='none';
+  usuarioAtual=found;
+  document.getElementById('topbar-user').textContent=found.nome;
+  const pNomes={admin:'📊 Administrativo',clinica:'🏥 Clínica',motoboy:'🏍️ Motoboy',recepcao:'🧬 Recepção'};
+  document.getElementById('topbar-perfil').textContent=pNomes[found.perfil];
+  document.getElementById('tela-login').style.display='none';
+  document.getElementById('app').style.display='flex';
+  renderTela();
+}
+document.addEventListener('keypress',e=>{if(e.key==='Enter'&&document.getElementById('tela-login').style.display!=='none')fazerLogin()});
+
+function sair(){
+  usuarioAtual=null;
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('tela-login').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+function renderTela(){
+  const telas={admin:telaAdmin,clinica:telaClinica,motoboy:telaMotoboy,recepcao:telaRecepcao};
+  document.getElementById('conteudo').innerHTML=telas[usuarioAtual.perfil]();
+}
+
+// ══════════════════════════════════════════════════════════════
+// TELA CLÍNICA
+// ══════════════════════════════════════════════════════════════
+function telaClinica(){
+  const u=usuarioAtual;
+  const minhasReqs=estado.reqs.filter(r=>r.clinicaId===u.id);
+  const msg=estado.mensagemBroadcast;
+
+  const lista=minhasReqs.length
+    ? minhasReqs.map(r=>`
+        <div class="req-item" onclick="verReq('${r.id}')">
+          <div class="req-info">
+            <h3>${r.paciente}</h3>
+            <p>Tutor: ${r.tutor} · ${r.qtd} material${r.qtd>1?'s':''} · ${r.horario}</p>
+          </div>
+          <div class="req-right">
+            <span class="badge badge-${r.status}">${ls(r.status)}</span>
+          </div>
+        </div>`).join('')
+    : '<div class="alerta alerta-info">Nenhuma requisição hoje.</div>';
+
+  const horasDisp=estado.horariosDisponiveis.map(h=>`
+    <span class="hora-sel" onclick="selHora(this,'${h}')">${h}</span>`).join('');
+
+  return `
+    ${msg.texto?`
+    <div class="msg-broadcast">
+      <div class="msg-titulo">📢 Mensagem da HopeLab</div>
+      <div class="msg-texto">${msg.texto}</div>
+      <div class="msg-hora">Enviado às ${msg.hora} pelo ${msg.autor}</div>
+    </div>`:''}
+
+    <div class="tabs">
+      <button class="tab ativo" onclick="switchTab(this,'t-nova')">Nova Coleta</button>
+      <button class="tab" onclick="switchTab(this,'t-lista')">Minhas Requisições</button>
+    </div>
+
+    <div id="t-nova" class="tabcontent">
+      <div class="card">
+        <div class="info-clinica">
+          <strong>🏥 ${u.nome}</strong>
+          📍 ${u.endereco}<br>
+          📞 ${u.telefone}
+        </div>
+
+        <div class="card-titulo">📋 Solicitar Coleta</div>
+
+        <div class="form-grupo">
+          <label>Nome do Paciente</label>
+          <input type="text" id="f-pac" placeholder="Nome completo do paciente">
+        </div>
+
+        <div class="form-row">
+          <div class="form-grupo">
+            <label>Tutor / Médico Responsável</label>
+            <input type="text" id="f-tutor" placeholder="Ex: Dr. João Silva">
+          </div>
+          <div class="form-grupo">
+            <label>Quantidade de Materiais</label>
+            <input type="number" id="f-qtd" value="1" min="1" max="30">
+          </div>
+        </div>
+
+        <div class="form-grupo">
+          <label>Horário de Coleta</label>
+          <div style="margin-top:4px">${horasDisp}</div>
+          <input type="hidden" id="f-hora" value="">
+        </div>
+
+        <div class="sep"></div>
+        <div class="card-titulo">📸 Fotos Obrigatórias</div>
+        <div class="form-row">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Foto do Saquinho</label>
+            <div class="foto-area" id="fa-saco" onclick="simFoto('fa-saco')">
+              <div class="foto-icon">🧴</div><p>Toque para fotografar</p>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Foto do Código de Barras</label>
+            <div class="foto-area" id="fa-bc" onclick="simFoto('fa-bc')">
+              <div class="foto-icon">📊</div><p>Toque para fotografar</p>
+            </div>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <button class="btn btn-primary btn-full btn-lg" onclick="enviarReq()">🚀 Solicitar Coleta</button>
+      </div>
+    </div>
+
+    <div id="t-lista" class="tabcontent" style="display:none">
+      <p class="secao-titulo">Requisições de Hoje</p>${lista}
+    </div>`;
+}
+
+function selHora(el,h){
+  document.querySelectorAll('.hora-sel').forEach(e=>e.classList.remove('ativo'));
+  el.classList.add('ativo');
+  document.getElementById('f-hora').value=h;
+}
+function simFoto(id){
+  const el=document.getElementById(id);
+  el.innerHTML='<div class="foto-icon">✅</div><p style="color:#059669;font-weight:600">Foto capturada!</p>';
+  el.style.borderColor='#059669';el.style.background='#F0FDF4';
+}
+function enviarReq(){
+  const pac=document.getElementById('f-pac').value.trim();
+  const tutor=document.getElementById('f-tutor').value.trim();
+  const qtd=parseInt(document.getElementById('f-qtd').value)||1;
+  const hora=document.getElementById('f-hora').value;
+  if(!pac){alert('Informe o nome do paciente.');return;}
+  if(!tutor){alert('Informe o tutor/médico responsável.');return;}
+  if(!hora){alert('Selecione um horário de coleta.');return;}
+  const bc='HL'+Date.now().toString().slice(-7);
+  const novaReq={
+    id:'REQ'+Date.now().toString().slice(-5),
+    clinicaId:usuarioAtual.id,
+    clinica:usuarioAtual.nome,
+    endereco:usuarioAtual.endereco,
+    paciente:pac, tutor, qtd, horario:hora,
+    status:'pendente', barcode:bc
+  };
+  estado.reqs.push(novaReq);
+  abrirModal(`
+    <div class="modal-titulo">✅ Coleta Solicitada!</div>
+    <div class="alerta alerta-sucesso">Requisição enviada! O motoboy receberá a rota atualizada.</div>
+    <div class="form-grupo"><label>Paciente</label><input readonly value="${pac}"></div>
+    <div class="form-grupo"><label>Tutor / Médico</label><input readonly value="${tutor}"></div>
+    <div class="form-grupo"><label>Qtd. de Materiais</label><input readonly value="${qtd}"></div>
+    <div class="form-grupo"><label>Horário Agendado</label><input readonly value="${hora}"></div>
+    <div class="form-grupo"><label>Código de Barras</label>
+      <input readonly value="${bc}" style="font-family:monospace;font-size:17px;font-weight:700;color:#2563EB;text-align:center">
+    </div>
+    <div class="modal-btns"><button class="btn btn-primary btn-full" onclick="fecharModal();renderTela()">OK</button></div>`);
+}
+function verReq(id){
+  const r=getReq(id);
+  abrirModal(`
+    <div class="modal-titulo">📋 ${r.id}</div>
+    <div class="form-grupo"><label>Paciente</label><input readonly value="${r.paciente}"></div>
+    <div class="form-grupo"><label>Tutor / Médico</label><input readonly value="${r.tutor}"></div>
+    <div class="form-grupo"><label>Qtd. de Materiais</label><input readonly value="${r.qtd}"></div>
+    <div class="form-grupo"><label>Horário</label><input readonly value="${r.horario}"></div>
+    <div class="form-grupo"><label>Código de Barras</label>
+      <input readonly value="${r.barcode}" style="font-family:monospace;font-weight:700;color:#2563EB">
+    </div>
+    <div class="form-grupo"><label>Status Atual</label><input readonly value="${ls(r.status)}"></div>
+    <div class="modal-btns"><button class="btn btn-primary btn-full" onclick="fecharModal()">Fechar</button></div>`);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TELA MOTOBOY
+// ══════════════════════════════════════════════════════════════
+function telaMotoboy(){
+  const rotaReqs=estado.reqs
+    .filter(r=>r.status!=='recebida')
+    .sort((a,b)=>a.horario.localeCompare(b.horario));
+
+  const paradas=rotaReqs.length
+    ? rotaReqs.map((r,i)=>{
+        const col=r.status==='coletada';
+        return `
+          <div class="parada-item">
+            <div class="parada-num ${col?'coletada':''}">${col?'✓':i+1}</div>
+            <div class="parada-info">
+              <h3>${r.clinica}</h3>
+              <p>📍 ${r.endereco}</p>
+              <p>👤 ${r.paciente} · 🧪 ${r.qtd} material${r.qtd>1?'s':''} · 🕐 ${r.horario}</p>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:8px">
+              <span class="badge badge-${r.status}">${ls(r.status)}</span>
+              ${!col?`<br><button class="btn btn-success btn-sm" style="margin-top:5px" onclick="abrirColeta('${r.id}')">Coletar</button>`:''}
+            </div>
+          </div>`}).join('')
+    : '<div class="alerta alerta-sucesso">✅ Todas as coletas concluídas!</div>';
+
+  return `
+    <div class="tabs">
+      <button class="tab ativo" onclick="switchTab(this,'t-rota')">Minha Rota</button>
+      <button class="tab" onclick="switchTab(this,'t-scan')">Scanner</button>
+    </div>
+    <div id="t-rota" class="tabcontent">
+      <div class="mapa-placeholder">
+        <div class="mapa-icon">🗺️</div>
+        <p>Rota Otimizada — ${rotaReqs.filter(r=>r.status!=='coletada').length} paradas pendentes</p>
+        <small>Ordenada por horário de agendamento</small>
+      </div>
+      <div class="alerta alerta-info">📍 Siga a ordem abaixo. O endereço de cada clínica já está incluso na rota.</div>
+      <p class="secao-titulo">Paradas de Hoje</p>
+      ${paradas}
+    </div>
+    <div id="t-scan" class="tabcontent" style="display:none">
+      <div class="scanner-area">
+        <div class="scanner-icon">📷</div>
+        <p>Digite ou escaneie o código de barras</p>
+        <input class="scanner-input" id="sc-in" type="text" placeholder="Ex: HL2024002">
+      </div>
+      <button class="btn btn-success btn-full btn-lg" onclick="confirmarScan()">✅ Confirmar Coleta</button>
+      <div id="sc-res" style="margin-top:11px"></div>
+    </div>`;
+}
+
+function abrirColeta(id){
+  const r=getReq(id);
+  abrirModal(`
+    <div class="modal-titulo">📦 Confirmar Coleta</div>
+    <div class="alerta alerta-info">Leia o código de barras do saquinho para confirmar a coleta.</div>
+    <div class="form-grupo"><label>Clínica</label><input readonly value="${r.clinica}"></div>
+    <div class="form-grupo"><label>Endereço</label><input readonly value="${r.endereco}"></div>
+    <div class="form-grupo"><label>Paciente</label><input readonly value="${r.paciente}"></div>
+    <div class="form-grupo"><label>Qtd. de Materiais</label><input readonly value="${r.qtd} material${r.qtd>1?'s':''}"></div>
+    <div class="form-grupo"><label>Código de Barras — Digite para confirmar</label>
+      <input id="m-bc" placeholder="Digite: ${r.barcode}" style="font-family:monospace;font-size:15px;text-align:center">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-success" style="flex:1" onclick="confColetaMod('${id}')">✅ Confirmar</button>
+    </div>`);
+}
+function confColetaMod(id){
+  if(!document.getElementById('m-bc').value.trim()){alert('Digite o código de barras!');return;}
+  getReq(id).status='coletada';
+  fecharModal();renderTela();
+}
+function confirmarScan(){
+  const cod=document.getElementById('sc-in').value.trim();
+  const r=estado.reqs.find(x=>x.barcode===cod);
+  const el=document.getElementById('sc-res');
+  if(!r){el.innerHTML=`<div class="alerta alerta-erro">❌ Código não encontrado: <strong>${cod}</strong></div>`;return;}
+  if(r.status==='coletada'||r.status==='recebida'){
+    el.innerHTML=`<div class="alerta alerta-aviso">⚠️ Esta amostra já foi coletada.</div>`;return;
+  }
+  r.status='coletada';
+  el.innerHTML=`<div class="alerta alerta-sucesso">✅ Coletado! Paciente: <strong>${r.paciente}</strong> · ${r.qtd} material${r.qtd>1?'s':''}</div>`;
+  document.getElementById('sc-in').value='';
+}
+
+// ══════════════════════════════════════════════════════════════
+// TELA RECEPÇÃO
+// ══════════════════════════════════════════════════════════════
+function telaRecepcao(){
+  const hist=estado.reqs.filter(r=>r.status==='recebida').map(r=>`
+    <div class="req-item">
+      <div class="req-info"><h3>${r.paciente}</h3><p>${r.clinica} · ${r.qtd} material${r.qtd>1?'s':''}</p></div>
+      <div class="req-right"><span class="badge badge-recebida">Recebida</span><div class="horario">${r.horario}</div></div>
+    </div>`).join('');
+  return `
+    <div class="tabs">
+      <button class="tab ativo" onclick="switchTab(this,'t-rec')">Receber Amostras</button>
+      <button class="tab" onclick="switchTab(this,'t-hist')">Histórico</button>
+    </div>
+    <div id="t-rec" class="tabcontent">
+      <div class="scanner-area">
+        <div class="scanner-icon">📷</div>
+        <p>Leia o código de barras do pacote recebido</p>
+        <input class="scanner-input" id="rec-sc" type="text" placeholder="Ex: HL2024001">
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="buscarRec()">🔍 Buscar Requisição</button>
+      <div id="rec-res" style="margin-top:11px"></div>
+    </div>
+    <div id="t-hist" class="tabcontent" style="display:none">
+      <p class="secao-titulo">Amostras Recebidas Hoje</p>
+      ${hist||'<div class="alerta alerta-info">Nenhuma amostra recebida ainda hoje.</div>'}
+    </div>`;
+}
+function buscarRec(){
+  const cod=document.getElementById('rec-sc').value.trim();
+  const r=estado.reqs.find(x=>x.barcode===cod);
+  const el=document.getElementById('rec-res');
+  if(!r){el.innerHTML=`<div class="alerta alerta-erro">❌ Código não encontrado.</div>`;return;}
+  if(r.status==='recebida'){el.innerHTML=`<div class="alerta alerta-aviso">⚠️ Esta amostra já foi recebida.</div>`;return;}
+  if(r.status!=='coletada'){el.innerHTML=`<div class="alerta alerta-aviso">⚠️ Esta amostra ainda não foi coletada pelo motoboy.</div>`;return;}
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-titulo">📦 Amostra Localizada — Confirme o recebimento</div>
+      <div class="form-grupo"><label>Clínica</label><input readonly value="${r.clinica}"></div>
+      <div class="form-grupo"><label>Paciente</label><input readonly value="${r.paciente}"></div>
+      <div class="form-grupo"><label>Tutor / Médico</label><input readonly value="${r.tutor}"></div>
+      <div class="form-grupo"><label>⚠️ Quantidade Informada pela Clínica</label>
+        <input readonly value="${r.qtd} material${r.qtd>1?'s':''}" style="font-size:16px;font-weight:700;color:#1E3A5F;text-align:center">
+      </div>
+      <div class="form-grupo">
+        <label>✅ Quantidade que Você Está Recebendo Agora</label>
+        <input type="number" id="rec-qtd" value="${r.qtd}" min="0" max="50"
+          style="font-size:20px;font-weight:700;text-align:center;color:#059669">
+      </div>
+      <div class="alerta alerta-info" style="margin-top:0">
+        Compare fisicamente os materiais antes de confirmar. Se houver diferença, uma divergência será registrada automaticamente.
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="confRec('${r.id}')">✅ Confirmar Recebimento</button>
+    </div>`;
+}
+function confRec(id){
+  const r=getReq(id);
+  const q=parseInt(document.getElementById('rec-qtd').value);
+  const div=q!==r.qtd;
+  r.status='recebida';
+  document.getElementById('rec-res').innerHTML=div
+    ?`<div class="alerta alerta-erro">
+        ⚠️ <strong>DIVERGÊNCIA REGISTRADA!</strong><br>
+        Clínica informou: ${r.qtd} material${r.qtd>1?'s':''}.<br>
+        Você recebeu: <strong>${q}</strong>.<br>
+        O administrativo foi notificado automaticamente.
+      </div>`
+    :`<div class="alerta alerta-sucesso">
+        ✅ <strong>Recebimento confirmado!</strong><br>
+        ${q} material${q>1?'s':''} de <strong>${r.paciente}</strong> — ${r.clinica}
+      </div>`;
+  document.getElementById('rec-sc').value='';
+}
+
+// ══════════════════════════════════════════════════════════════
+// TELA ADMIN
+// ══════════════════════════════════════════════════════════════
+function telaAdmin(){
+  const total=estado.reqs.length;
+  const col=estado.reqs.filter(r=>r.status==='coletada'||r.status==='recebida').length;
+  const pend=estado.reqs.filter(r=>r.status==='pendente').length;
+  const rec=estado.reqs.filter(r=>r.status==='recebida').length;
+
+  const chips=estado.horariosDisponiveis.map(h=>`
+    <span class="hora-chip">${h} <span class="del" onclick="remHorario('${h}')">×</span></span>`).join('');
+
+  const usuariosRows=usuarios.filter(u=>u.perfil!=='admin').map(u=>`
+    <tr>
+      <td>${u.nome}</td>
+      <td><span class="badge badge-${u.perfil==='clinica'?'aceita':u.perfil==='motoboy'?'coletada':'recebida'}">${u.perfil}</span></td>
+      <td style="font-family:monospace">${u.user}</td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="excluirUsuario('${u.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+
+  const reqRows=estado.reqs.map(r=>`
+    <div class="req-item">
+      <div class="req-info">
+        <h3>${r.paciente}</h3>
+        <p>${r.clinica} · ${r.qtd} mat. · ${r.horario}</p>
+      </div>
+      <div class="req-right">
+        <span class="badge badge-${r.status}">${ls(r.status)}</span>
+      </div>
+    </div>`).join('');
+
+  return `
+    <div class="tabs">
+      <button class="tab ativo" onclick="switchTab(this,'t-dash')">Dashboard</button>
+      <button class="tab" onclick="switchTab(this,'t-users')">Usuários</button>
+      <button class="tab" onclick="switchTab(this,'t-config')">Configurações</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="t-dash" class="tabcontent">
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-azul"><div class="kpi-valor">${total}</div><div class="kpi-label">Total hoje</div></div>
+        <div class="kpi-card kpi-verde"><div class="kpi-valor">${col}</div><div class="kpi-label">Coletadas</div></div>
+        <div class="kpi-card kpi-laranja"><div class="kpi-valor">${pend}</div><div class="kpi-label">Pendentes</div></div>
+        <div class="kpi-card kpi-roxo"><div class="kpi-valor">${rec}</div><div class="kpi-label">Recebidas</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-titulo">📍 Motoboy em Tempo Real</div>
+        <div class="mapa-placeholder">
+          <div class="mapa-icon">🏍️</div>
+          <p>Localização ao vivo · Carlos Motoboy</p>
+          <small>Atualizado há 28s · Av. Paulista — 2 paradas restantes</small>
+        </div>
+        <div class="sep"></div>
+        <div>
+          <div class="tl-item"><div class="tl-dot tl-verde"></div><div class="tl-content"><h4>08:42 — REQ001 coletada</h4><p>Maria Silva Santos · Clínica São Paulo</p></div></div>
+          <div class="tl-item"><div class="tl-dot tl-azul"></div><div class="tl-content"><h4>09:05 — Motoboy a caminho</h4><p>Próxima: Rua das Flores · João Carlos Oliveira</p></div></div>
+          <div class="tl-item"><div class="tl-dot tl-roxo"></div><div class="tl-content"><h4>08:15 — REQ004 recebida no lab</h4><p>Pedro Henrique Lima · 1 material confirmado</p></div></div>
+        </div>
+      </div>
+
+      <p class="secao-titulo">Todas as Requisições</p>
+      ${reqRows}
+    </div>
+
+    <!-- USUÁRIOS -->
+    <div id="t-users" class="tabcontent" style="display:none">
+      <div class="card">
+        <div class="card-titulo">➕ Criar Novo Usuário</div>
+        <div class="form-row">
+          <div class="form-grupo"><label>Nome Completo / Clínica</label><input type="text" id="nu-nome" placeholder="Ex: Clínica Central"></div>
+          <div class="form-grupo"><label>Perfil</label>
+            <select id="nu-perfil" onchange="toggleCamposCli()">
+              <option value="clinica">Clínica</option>
+              <option value="motoboy">Motoboy</option>
+              <option value="recepcao">Recepção</option>
+            </select>
+          </div>
+        </div>
+        <div id="campos-cli">
+          <div class="form-grupo"><label>Endereço Completo</label><input type="text" id="nu-end" placeholder="Ex: Rua Augusta, 100 — Centro"></div>
+          <div class="form-row">
+            <div class="form-grupo"><label>Telefone</label><input type="text" id="nu-tel" placeholder="(11) 9999-0000"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-grupo"><label>Usuário (login)</label><input type="text" id="nu-user" placeholder="Ex: clinica3"></div>
+          <div class="form-grupo"><label>Senha</label><input type="text" id="nu-pass" placeholder="Ex: senha123"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="criarUsuario()">➕ Criar Usuário</button>
+      </div>
+
+      <div class="card">
+        <div class="card-titulo">👥 Usuários Cadastrados</div>
+        <table class="tabela">
+          <thead><tr><th>Nome</th><th>Perfil</th><th>Usuário</th><th>Ação</th></tr></thead>
+          <tbody id="tbody-users">${usuariosRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div id="t-config" class="tabcontent" style="display:none">
+
+      <div class="card">
+        <div class="card-titulo">📢 Mensagem para todas as Clínicas</div>
+        <div class="form-grupo">
+          <label>Mensagem (aparece no topo da tela das clínicas)</label>
+          <textarea id="cfg-msg" rows="3" placeholder="Ex: Atenção — hoje haverá coleta especial às 14h.">${estado.mensagemBroadcast.texto}</textarea>
+        </div>
+        <div style="display:flex;gap:9px">
+          <button class="btn btn-primary" style="flex:1" onclick="salvarMensagem()">📤 Enviar agora para todas as clínicas</button>
+          <button class="btn btn-secondary" onclick="limparMensagem()">🗑️ Limpar</button>
+        </div>
+        ${estado.mensagemBroadcast.texto?`
+        <div class="alerta alerta-info" style="margin-top:11px">
+          Última mensagem enviada às ${estado.mensagemBroadcast.hora} por ${estado.mensagemBroadcast.autor}
+        </div>`:''}
+      </div>
+
+      <div class="card">
+        <div class="card-titulo">🕐 Horários Disponíveis para Agendamento</div>
+        <p style="font-size:12px;color:#6B7280;margin-bottom:11px">Estes horários aparecerão para as clínicas escolherem ao solicitar coleta.</p>
+        <div id="chips-horas" style="margin-bottom:12px">${chips}</div>
+        <div style="display:flex;gap:8px">
+          <input type="time" id="novo-hora" style="flex:1;padding:8px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px">
+          <button class="btn btn-primary" onclick="addHorario()">+ Adicionar</button>
+        </div>
+      </div>
+
+    </div>`;
+}
+
+// ── Admin: usuários
+function toggleCamposCli(){
+  const p=document.getElementById('nu-perfil').value;
+  document.getElementById('campos-cli').style.display=p==='clinica'?'block':'none';
+}
+function criarUsuario(){
+  const nome=document.getElementById('nu-nome').value.trim();
+  const perf=document.getElementById('nu-perfil').value;
+  const user=document.getElementById('nu-user').value.trim();
+  const pass=document.getElementById('nu-pass').value.trim();
+  if(!nome||!user||!pass){alert('Preencha nome, usuário e senha.');return;}
+  if(usuarios.find(u=>u.user===user)){alert('Este usuário já existe.');return;}
+  const novo={id:'u'+Date.now(),user,senha:pass,perfil:perf,nome};
+  if(perf==='clinica'){
+    novo.endereco=document.getElementById('nu-end').value.trim()||'Endereço não informado';
+    novo.telefone=document.getElementById('nu-tel').value.trim()||'—';
+  }
+  usuarios.push(novo);
+  alert(`Usuário "${nome}" criado!\nLogin: ${user} / Senha: ${pass}`);
+  renderTela();
+}
+function excluirUsuario(id){
+  if(!confirm('Excluir este usuário?'))return;
+  const i=usuarios.findIndex(u=>u.id===id);
+  if(i>-1)usuarios.splice(i,1);
+  renderTela();
+}
+
+// ── Admin: mensagem
+function salvarMensagem(){
+  const t=document.getElementById('cfg-msg').value.trim();
+  if(!t){alert('Digite uma mensagem.');return;}
+  estado.mensagemBroadcast={texto:t,hora:agora(),autor:'Administrativo'};
+  alert('Mensagem enviada para todas as clínicas!');
+  renderTela();
+}
+function limparMensagem(){
+  estado.mensagemBroadcast={texto:'',hora:'',autor:''};
+  renderTela();
+}
+
+// ── Admin: horários
+function addHorario(){
+  const h=document.getElementById('novo-hora').value;
+  if(!h){alert('Selecione um horário.');return;}
+  if(estado.horariosDisponiveis.includes(h)){alert('Horário já existe.');return;}
+  estado.horariosDisponiveis.push(h);
+  estado.horariosDisponiveis.sort();
+  renderTela();
+  switchTab(document.querySelectorAll('.tab')[2],'t-config');
+}
+function remHorario(h){
+  estado.horariosDisponiveis=estado.horariosDisponiveis.filter(x=>x!==h);
+  renderTela();
+  switchTab(document.querySelectorAll('.tab')[2],'t-config');
+}
+</script>
+</body>
+</html>
